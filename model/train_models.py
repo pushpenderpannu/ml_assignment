@@ -53,8 +53,8 @@ def load_data():
     X = df.drop(columns=[TARGET_COL])
     y = df[TARGET_COL].astype(str)
 
-    print(f"\nFeatures: {X.shape[1]} (assignment minimum is 12)")
-    print(f"Instances: {X.shape[0]} (assignment minimum is 500)")
+    print(f"\nFeatures: {X.shape[1]}")
+    print(f"Input record count: {X.shape[0]}")
     print(f"Missing values: {int(X.isnull().sum().sum())}")
 
     print("\nClass distribution:")
@@ -193,38 +193,37 @@ def compute_metrics(y_true, y_pred, proba, n_classes):
         "MCC": matthews_corrcoef(y_true, y_pred),
     }
 
+def heading_separater(message):
+    print("\n" + "=" * 70)
+    print(message)
+    print("=" * 70)
+
 
 def main():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    print("=" * 70)
-    print("STEP 1: LOAD DATA")
-    print("=" * 70)
+    heading_separater("STEP 1: LOAD DATA")
     X, y, baseline = load_data()
 
-    print("\n" + "=" * 70)
-    print("STEP 2: ENCODE NOMINAL COLUMNS")
-    print("=" * 70)
+    heading_separater("STEP 2: ENCODE NOMINAL COLUMNS")
     X = encode_nominals(X)
 
-    print("\n" + "=" * 70)
-    print("STEP 3: ENCODE TARGET AND SPLIT")
-    print("=" * 70)
+    heading_separater("STEP 3: ENCODE TARGET AND SPLIT")
+
     encoder = LabelEncoder()
     y_enc = encoder.fit_transform(y)
     n_classes = len(encoder.classes_)
+
     print(f"Classes: {list(encoder.classes_)} -> {list(range(n_classes))}")
 
     X_train, X_test, y_train, y_test = split_data(X, y_enc)
 
-    print("\n" + "=" * 70)
-    print("STEP 4: SCALE FEATURES")
-    print("=" * 70)
+    heading_separater("STEP 4: SCALE FEATURES")
+
     scaler, X_train_s, X_test_s = fit_scaler(X_train, X_test)
 
-    print("\n" + "=" * 70)
-    print("STEP 5: TRAIN MODELS")
-    print("=" * 70)
+    heading_separater("STEP 5: TRAIN MODELS")
+
     specs = build_models()
 
     filenames = {
@@ -256,9 +255,8 @@ def main():
         print(f"  {name:<26} test acc {results[name]['Accuracy']:.4f} | "
               f"train acc {train_scores[name]:.4f} -> {filenames[name]}")
 
-    print("\n" + "=" * 70)
-    print("STEP 6: SAVE ARTIFACTS")
-    print("=" * 70)
+    heading_separater("STEP 6: SAVE ARTIFACTS")
+    
     joblib.dump(scaler, os.path.join(MODEL_DIR, "scaler.pkl"))
     joblib.dump(encoder, os.path.join(MODEL_DIR, "label_encoder.pkl"))
     joblib.dump(list(X_train.columns),
@@ -271,9 +269,7 @@ def main():
     test_df.to_csv(TEST_CSV, index=False)
     print(f"  {TEST_CSV} ({test_df.shape[0]} rows, {test_df.shape[1]} cols)")
 
-    print("\n" + "=" * 70)
-    print("COMPARISON TABLE  (paste into README.md)")
-    print("=" * 70)
+    heading_separater("COMPARISON TABLE  (paste into README.md)")
     table = pd.DataFrame(results).transpose()
     print(table.round(4).to_string())
 
@@ -285,9 +281,8 @@ def main():
               f"{row['Precision']:.4f} | {row['Recall']:.4f} | "
               f"{row['F1']:.4f} | {row['MCC']:.4f} |")
 
-    print("\n" + "=" * 70)
-    print("NOTES FOR YOUR OBSERVATIONS SECTION")
-    print("=" * 70)
+    heading_separater("NOTES FOR YOUR OBSERVATIONS SECTION")
+    
     print(f"Majority-class baseline accuracy: {baseline:.4f}")
     print(f"Best accuracy: {table['Accuracy'].idxmax()} "
           f"({table['Accuracy'].max():.4f})")
